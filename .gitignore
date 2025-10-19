@@ -1,0 +1,73 @@
+# R / RStudio
+.Rproj.user/
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
+.Renviron
+.Rprofile
+
+# R CMD check outputs
+.Rcheck/
+
+# Package build artifacts (built vignettes live here)
+inst/doc/
+
+# Vignettes: built files and caches (keep only source .Rmd/.qmd)
+vignettes/*.html
+vignettes/*.pdf
+vignettes/**/figure/
+vignettes/**/_bookdown_files/
+**/*_cache/
+**/cache/
+*.knit.md
+*.utf8.md
+.Rcache/
+
+# Coverage
+.covr.R
+coverage/
+
+# Linters
+.lintr
+.lintr_cache
+
+# Pipelines
+_targets/
+.drake/
+
+# Dependency managers
+renv/library/
+renv/staging/
+packrat/lib*/
+packrat/src/
+
+# pkgdown (site cache; keep docs/ tracked if deploying to GitHub Pages)
+pkgdown/
+
+# Compiled code
+src/*.o
+src/*.so
+src/*.dll
+*.o
+*.so
+*.dll
+
+# OS files
+.DS_Store
+Thumbs.db
+Icon?
+Desktop.ini
+
+# IDE / editor
+.vscode/
+.idea/
+
+# Optional: virtual envs (if you mix Python)
+.venv/
+venv/
+ENV/
+env/
+
+# Misc
+nohup.out
