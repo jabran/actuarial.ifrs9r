@@ -1,0 +1,137 @@
+---
+title: "Getting Started with actuarial.ifrs9r"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with actuarial.ifrs9r}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```r
+library(actuarial.ifrs9r)
+```
+
+# Overview
+
+This vignette demonstrates IFRS 9 Expected Credit Loss (ECL) computations using a transition matrix approach:
+- Validate and work with a Markov transition matrix
+- Build a lifetime PD curve for a given starting rating
+- Model EAD and LGD term structures
+- Apply discounting and compute ECL
+- Weight macroeconomic scenarios
+- Assign stages via a simple SICR rule
+- Export results to Excel
+
+## Transition matrix
+
+```r
+P <- example_transition_matrix()
+tm_validate(P, default_state = "Default")
+P
+```
+
+## Lifetime PD from a starting state
+
+Assume monthly periods and a 5-year horizon (60 months).
+
+```r
+h <- 60
+cum_pd_A <- lifetime_pd_from_state(P, state = "A", horizon = h)
+head(cum_pd_A, 12)
+```
+
+Convert cumulative PD to marginal PD:
+
+```r
+mpd_A <- marginal_pd_from_cum(cum_pd_A)
+sum(mpd_A)  # equals last element of cumulative PD
+```
+
+## EAD, LGD, discounting
+
+Assume a flat EAD of 1000 and constant LGD of 45%. Discount at 5% effective annual rate.
+
+```r
+ead <- ead_schedule(horizon = h, method = "flat", principal = 1000)
+lgd <- lgd_curve(horizon = h, constant = 0.45)
+df  <- discount_factors(annual_rate = 0.05, periods_per_year = 12, horizon = h)
+```
+
+## ECL calculation
+
+```r
+ecl <- ecl_from_cum_pd(cum_pd_A, ead, lgd, df)
+ecl
+```
+
+## Scenario-weighted ECL
+
+Suppose three scenarios adjust the cumulative PD curve by scaling factors.
+
+```r
+cum_pd_list <- list(
+  base = cum_pd_A,
+  up   = pmin(cum_pd_A * 1.3, 1),
+  down = pmax(cum_pd_A * 0.8, 0)
+)
+weights <- c(0.5, 0.3, 0.2)
+ecl_w <- weighted_ecl_from_cum_pd(cum_pd_list, weights, ead, lgd, df)
+ecl_w
+```
+
+## Staging and stage-aware ECL
+
+Assume lifetime PD at origination was 12%, now is 25%. Not credit impaired.
+
+```r
+pd_orig <- 0.12
+pd_curr <- 0.25
+stage <- stage_from_sicr(pd_orig, pd_curr, credit_impaired = FALSE, threshold_ratio = 2, threshold_abs = 0.1)
+stage
+```
+
+Stage-aware ECL (12-month if Stage 1, lifetime otherwise):
+
+```r
+ecl_stage <- ecl_staged(cum_pd_A, ead, lgd, df, stage = stage, short_horizon = 12)
+ecl_stage
+```
+
+## Export to Excel
+
+You can export a tidy breakdown and key inputs to `.xlsx`:
+
+```r
+# Build components
+comp <- ecl_components(cum_pd_A, ead, lgd, df)
+
+# Optional tables
+scenarios <- data.frame(
+  scenario = c("base", "up", "down"),
+  weight = weights,
+  ecl = c(
+    ecl_from_cum_pd(cum_pd_list$base, ead, lgd, df),
+    ecl_from_cum_pd(cum_pd_list$up, ead, lgd, df),
+    ecl_from_cum_pd(cum_pd_list$down, ead, lgd, df)
+  )
+)
+
+stage_info <- list(stage = stage, ecl = ecl_stage)
+
+metadata <- list(
+  run_date = as.character(Sys.Date()),
+  currency = "USD",
+  horizon_months = h
+)
+
+# Write the workbook
+path <- file.path(tempdir(), "ifrs9_example.xlsx")
+export_ifrs9_results_xlsx(path, comp, P = P, scenarios = scenarios, stage_info = stage_info, metadata = metadata, overwrite = TRUE)
+path
+```
+
+## Notes
+
+- Periods are generic; with monthly data use `periods_per_year = 12`.
+- For TTC to PIT adjustments, apply scenario factors to the cumulative PD curve or introduce a mapping function to shift PDs by macroeconomic variables.
+

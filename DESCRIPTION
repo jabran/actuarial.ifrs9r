@@ -1,0 +1,24 @@
+Package: actuarial.ifrs9r
+Type: Package
+Title: IFRS 9 Expected Credit Loss Modelling with Transition Matrices
+Version: 0.1.0
+Authors@R: 
+    c(person(given = "Your", family = "Name", role = c("aut", "cre"), email = "you@example.com"))
+Description: Tools to compute IFRS 9 Expected Credit Losses (ECL) using transition matrices, staging, scenario weighting, EAD/LGD modelling, and discounting. Includes utilities to validate transition matrices and derive lifetime probability of default (PD) term structures. Supports exporting results to Excel.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 4.1)
+Imports: 
+    stats,
+    Matrix,
+    writexl
+Suggests: 
+    testthat (>= 3.1.0),
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+URL: https://github.com/your-org/actuarial.ifrs9r
+BugReports: https://github.com/your-org/actuarial.ifrs9r/issues
+Note: Repository and package Name aligned as 'actuarial.ifrs9r' (CRAN-compliant naming).
